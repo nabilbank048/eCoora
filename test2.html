@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart - Firebase Realtime Database</title>
+  <style>
+    .cart-item {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .quantity-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 5px 10px;
+    }
+
+    .quantity {
+      font-weight: bold;
+      min-width: 40px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <h1>Shopping Cart</h1>
+  <div id="cart-items"></div>
+
+
+
+  <strong>Total: $<span id="cart-total-price">0.00</span></strong>
+  <strong>Total Quantity: $<span id="cart-count">0.00</span></strong>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCL1wEdp0ViHXnXhDr_kvuZFoM6ZihTU9s",
+      authDomain: "eghatail-29bc3.firebaseapp.com",
+      databaseURL: "https://eghatail-29bc3-default-rtdb.firebaseio.com",
+      projectId: "eghatail-29bc3",
+
+      storageBucket: "eghatail-29bc3.firebasestorage.app",
+      messagingSenderId: "321001114933",
+      appId: "1:321001114933:web:ea04ec1005b15ef14d107c",
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    var userId = "user123";
+
+    // Cart item class
+    class ShoppingCart {
+      constructor(userId) {
+       // this.userId = userId;
+        this.cartRef = ref(database, `carts/user123/items`);
+      }
+
+      // Method 1: Update quantity directly
+      async updateQuantity(productId, newQuantity,newtotal) {
+        try {
+          const itemRef = ref(database, `carts/user123/items/${productId}`);
+
+          if (newQuantity <= 0) {
+            // Remove item if quantity is 0 or negative
+            await update(itemRef, null);
+            console.log(`Item ${productId} removed from cart`);
+          } else {
+            // Update quantity
+            await update(itemRef, {
+              quantity: newQuantity,
+              total:newtotal
+
+            });
+            console.log(`Updated ${productId} quantity to ${newQuantity}`);
+          }
+        } catch (error) {
+          console.error("Error updating quantity:", error);
+        }
+      }
+
+      // Method 2: Increment quantity by 1
+      async incrementQuantity(productId, currentQuantity) {
+        await this.updateQuantity(productId, currentQuantity + 1);
+      }
+
+      // Method 3: Decrement quantity by 1
+      async decrementQuantity(productId, currentQuantity) {
+        if (currentQuantity > 1) {
+          await this.updateQuantity(productId, currentQuantity - 1);
+        } else {
+          await this.removeItem(productId);
+        }
+      }
+
+      // Remove item from cart
+      async removeItem(productId) {
+        try {
+          const itemRef = ref(database, `carts/user123/items/${productId}`);
+          await update(itemRef, null);
+          console.log(`Item ${productId} removed from cart`);
+        } catch (error) {
+          console.error("Error removing item:", error);
+        }
+      }
+
+      // Listen for cart changes
+      listenToCartUpdates(callback) {
+        onValue(this.cartRef, (snapshot) => {
+          const cartItems = snapshot.val() || {};
+          callback(cartItems);
+        });
+      }
+    }
+
+    // Initialize cart (replace "user123" with actual user ID)
+    const cart = new ShoppingCart("carts/user123/items");
+
+    // Display cart items in HTML
+    function displayCartItems(cartItems) {
+      const cartContainer = document.getElementById('cart-items');
+
+      if (Object.keys(cartItems).length === 0) {
+        cartContainer.innerHTML = '<p>Your cart is empty</p>';
+        return;
+      }
+
+      cartContainer.innerHTML = '';
+
+      for (const [productId, item] of Object.entries(cartItems)) {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'cart-item';
+        itemDiv.innerHTML = `
+                    <div>
+                        <strong>${item.name || 'Product'}</strong><br>
+                        Price: $${item.price || '0'}<br>
+                        Total: $${item.total || '0'}
+                    </div>
+                    <div class="quantity-controls">
+                        <button onclick="updateQuantity('${productId}', ${item.quantity - 1},${(item.quantity - 1)*item.price})">-</button>
+                        <span class="quantity">${item.quantity}</span>
+                        <button onclick="updateQuantity('${productId}', ${item.quantity + 1},${(item.quantity + 1)*item.price})">+</button>
+                        <button onclick="removeItem('${productId}')">Remove</button>
+                    </div>
+                `;
+        cartContainer.appendChild(itemDiv);
+      }
+
+
+
+         let totalItemsCount = 0;
+    let totalBill = 0;
+
+const cartTotalPrice = document.getElementById('cart-total-price');
+const cartCount = document.getElementById('cart-count');
+
+          for (const [productId, item] of Object.entries(cartItems)) {
+        totalItemsCount += item.quantity;
+        totalBill += item.price * item.quantity;
+
+        // Append UI row node for each individual cart entry
+      
+
+
+
+    }
+
+    cartTotalPrice.textContent = totalBill.toFixed(2);
+cartCount.textContent = totalItemsCount;
+
+
+    }
+
+    // Global functions for button clicks
+    window.updateQuantity = async (productId, newQuantity,newtotal) => {
+      if (newQuantity <= 0) {
+        await cart.removeItem(productId);
+      } else {
+        await cart.updateQuantity(productId, newQuantity,newtotal);
+      }
+    };
+
+    window.removeItem = async (productId) => {
+      await cart.removeItem(productId);
+    };
+
+    // Listen to cart updates and display
+    cart.listenToCartUpdates(displayCartItems);
+
+    // Example: Add some items to cart for testing
+    async function addTestItems() {
+      const itemsRef = ref(database, `carts/user123/items`);
+      const testItems = {
+        "1": {
+          name: "Product 1",
+          price: 20,
+          quantity: 2,
+          total: 40
+        },
+        "2": {
+          name: "Product 2",
+          price: 30,
+          quantity: 1,
+          total: 30
+        }
+      };
+      await update(itemsRef, testItems);
+    }
+
+    // Uncomment to add test items
+    addTestItems();
+  </script>
+</body>
+
+</html>

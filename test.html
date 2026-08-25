@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic Radio Buttons from Array</title>
+</head>
+<body>
+
+    <h3>Select a framework:</h3>
+    <!-- The container where radio buttons will render -->
+    <div id="radioContainer"></div>
+
+    <p id="output">Click an option to see its index position.</p>
+
+    <script>
+        // Your JavaScript Data Array
+        const frameworks = ['React', 'Vue', 'Angular', 'Svelte'];
+
+        const container = document.getElementById('radioContainer');
+        const output = document.getElementById('output');
+
+        // Loop through array and build radio inputs along with their index positions
+        frameworks.forEach((item, index) => {
+            container.innerHTML += `
+                <label>
+                    <input type="radio" name="frameworkGroup" value="${item}" onclick="getPosition(${index})">
+                    ${item}
+                </label><br>
+            `;
+        });
+
+        // Function called immediately when a radio button is clicked
+        function getPosition(arrayIndex) {
+            const chosenValue = frameworks[arrayIndex];
+            output.innerText = `Value: "${chosenValue}" is at Array Index: [${arrayIndex}]`;
+        }
+    </script>
+
+</body>
+</html>
