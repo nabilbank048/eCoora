@@ -217,7 +217,8 @@ function next() {
             'order_id': randomNumber,
             'status': "Pending",
             'subtotal': gtotal,
-            'uid': uid
+            'uid': uid,
+            'tday':today 
 
         });
 
